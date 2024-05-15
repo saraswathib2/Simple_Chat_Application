@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Application</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <script>
+        var socket = io();
+
+        function setNickname() {
+            var nicknameInput = document.getElementById('nicknameInput');
+            var nickname = nicknameInput.value.trim();
+            if (nickname !== '') {
+                socket.emit('set_nickname', nickname);
+                nicknameInput.disabled = true;
+            }
+        }
+
+        function sendMessage() {
+            var recipientInput = document.getElementById('recipientInput');
+            var messageInput = document.getElementById('messageInput');
+            var recipient = recipientInput.value.trim();
+            var message = messageInput.value.trim();
+            if (message !== '') {
+                socket.emit('message', {'recipient': recipient, 'message': message});
+                messageInput.value = '';
+            }
+        }
+
+        socket.on('message', function(data) {
+            var chatBox = document.getElementById('chatBox');
+            var newMessage = document.createElement('div');
+            newMessage.textContent = '[' + data['timestamp'] + '] ' + data['sender'] + ': ' + data['message'];
+            chatBox.appendChild(newMessage);
+        });
+
+        socket.on('error', function(message) {
+            alert(message);
+        });
+
+        socket.on('update_users', function(users) {
+            var userList = document.getElementById('userList');
+            userList.innerHTML = '';
+            users.forEach(function(user) {
+                var listItem = document.createElement('li');
+                listItem.textContent = user;
+                userList.appendChild(listItem);
+            });
+        });
+    </script>
+</head>
+<body>
+    <div>
+        <label for="nicknameInput">Nickname:</label>
+        <input type="text" id="nicknameInput">
+        <button onclick="setNickname()">Set Nickname</button>
+    </div>
+    <hr>
+    <div>
+        <label for="recipientInput">Recipient:</label>
+        <input type="text" id="recipientInput" placeholder="Type 'all' for all users">
+        <label for="messageInput">Message:</label>
+        <input type="text" id="messageInput">
+        <button onclick="sendMessage()">Send</button>
+    </div>
+    <hr>
+    <div>
+        <h3>Chat</h3>
+        <ul id="chatBox"></ul>
+    </div>
+    <div>
+        <h3>Users</h3>
+        <ul id="userList"></ul>
+    </div>
+</body>
+</html>
